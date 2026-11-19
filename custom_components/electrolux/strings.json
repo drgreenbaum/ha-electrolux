@@ -654,6 +654,18 @@
       },
       "dwywdatatodryer_programuid": {
         "name": "Dwyw data to dryer program UID"
+      },
+      "rvcmode": {
+        "name": "Mode",
+        "state": {
+          "quiet": "Quiet",
+          "smart": "Smart",
+          "power": "Power",
+          "eco": "Eco"
+        }
+      },
+      "cleaningcommand": {
+        "name": "Cleaning command"
       }
     },
     "sensor": {
@@ -1318,13 +1330,35 @@
         "name": "Battery"
       },
       "robotstatus": {
-        "name": "Robot status"
+        "name": "Robot status",
+        "state": {
+          "cleaning": "Cleaning",
+          "paused_cleaning": "Paused",
+          "spot_cleaning": "Spot cleaning",
+          "paused_spot_cleaning": "Spot cleaning paused",
+          "returning": "Returning to dock",
+          "paused_returning": "Return to dock paused",
+          "returning_for_pitstop": "Returning to recharge",
+          "paused_returning_for_pitstop": "Return to recharge paused",
+          "charging": "Charging",
+          "sleeping": "Ready to clean",
+          "error": "Error",
+          "pitstop": "Recharging to resume",
+          "manual_steering": "Manual steering",
+          "firmware_upgrade": "Updating software"
+        }
       },
       "cleaningcommand": {
         "name": "Cleaning command"
       },
       "dustbinstatus": {
-        "name": "Dustbin status"
+        "name": "Dustbin status",
+        "state": {
+          "connected": "Inserted",
+          "not_connected": "Not inserted",
+          "full": "Full",
+          "empty": "Emptied"
+        }
       },
       "mainbrushsqm": {
         "name": "Main brush usage"
@@ -1541,6 +1575,30 @@
       },
       "adtankbsoftstandarddose": {
         "name": "Tank b softener standard dose"
+      },
+      "mainbrushremaining": {
+        "name": "Brush roll"
+      },
+      "sidebrushremaining": {
+        "name": "Side brush"
+      },
+      "filterremaining": {
+        "name": "Particle filter"
+      },
+      "lastcleaningstart": {
+        "name": "Last cleaning start"
+      },
+      "lastcleaningend": {
+        "name": "Last cleaning end"
+      },
+      "lastcleaningduration": {
+        "name": "Last cleaning duration"
+      },
+      "lastcleaningarea": {
+        "name": "Last cleaning area"
+      },
+      "lastcleaningrecharges": {
+        "name": "Last cleaning recharges"
       }
     },
     "switch": {
@@ -1765,6 +1823,11 @@
       },
       "hoodfiltercharcindication": {
         "name": "Charcoal Filter Indication"
+      }
+    },
+    "image": {
+      "map": {
+        "name": "Map"
       }
     }
   }

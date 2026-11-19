@@ -9,7 +9,7 @@ Because the catalog is matched against the device's actual capabilities, placing
 keys in one catalog is safe — each device will only expose its own subset.
 """
 
-from homeassistant.components.sensor import SensorDeviceClass
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.components.switch.const import SwitchDeviceClass
 from homeassistant.const import PERCENTAGE, EntityCategory
 
@@ -23,16 +23,47 @@ _PUREI9_ROBOT_STATUS_VALUES: dict[int | float | str, str] = {
     "2": "Paused cleaning",
     "3": "Spot cleaning",
     "4": "Paused spot cleaning",
-    "5": "Zone cleaning",
-    "6": "Paused zone cleaning",
-    "7": "Collecting",
-    "8": "Paused collecting",
-    "9": "Docked",
+    "5": "Returning",
+    "6": "Paused returning",
+    "7": "Returning for pitstop",
+    "8": "Paused returning for pitstop",
+    "9": "Charging",
     "10": "Sleeping",
     "11": "Error",
-    "12": "Fully charged",
-    "13": "Going home",
-    "14": "End of life",
+    "12": "Pitstop",
+    "13": "Manual steering",
+    "14": "Firmware upgrade",
+}
+
+# Translated PUREi9 robotStatus states (entity.sensor.robotstatus.state.*).
+# 5-8 are the return-to-dock states: after an area clean the robot reports 5
+# while it drives back (see #371). 10 is "Ready to clean" in the app.
+_PUREI9_ROBOT_STATUS_STATES: dict[str, str] = {
+    "1": "cleaning",
+    "2": "paused_cleaning",
+    "3": "spot_cleaning",
+    "4": "paused_spot_cleaning",
+    "5": "returning",
+    "6": "paused_returning",
+    "7": "returning_for_pitstop",
+    "8": "paused_returning_for_pitstop",
+    "9": "charging",
+    "10": "sleeping",
+    "11": "error",
+    "12": "pitstop",
+    "13": "manual_steering",
+    "14": "firmware_upgrade",
+}
+
+# dustbinStatus arrives in lowercase ("connected", "notConnected") while the
+# capability declares upper case; both are matched case-insensitively.
+# Named after the manual: the bin is inserted, taken out, full or just emptied
+# ("empty" is reported right after an emptied bin is put back).
+_DUSTBIN_STATES: dict[str, str] = {
+    "connected": "connected",
+    "notconnected": "not_connected",
+    "full": "full",
+    "empty": "empty",
 }
 
 CATALOG_RVC: dict[str, ElectroluxDevice] = {
@@ -59,6 +90,7 @@ CATALOG_RVC: dict[str, ElectroluxDevice] = {
         entity_icon="mdi:robot-vacuum",
         friendly_name="Robot Status",
         value_mapping=_PUREI9_ROBOT_STATUS_VALUES,
+        translated_states=_PUREI9_ROBOT_STATUS_STATES,
     ),
     # Cleaning command (read-write select)
     "CleaningCommand": ElectroluxDevice(
@@ -94,6 +126,7 @@ CATALOG_RVC: dict[str, ElectroluxDevice] = {
         entity_category=None,
         entity_icon="mdi:trash-can-outline",
         friendly_name="Dustbin Status",
+        translated_states=_DUSTBIN_STATES,
         value_mapping={
             "NOTCONNECTED": "Not connected",
             "CONNECTED": "Connected",
@@ -147,10 +180,16 @@ CATALOG_RVC: dict[str, ElectroluxDevice] = {
         friendly_name="Mute",
     ),
     # ── PUREi9 maintenance counters (reported in m²) ──────────────────────────
+    # The API reports snake_case keys (main_brush_sqm, side_brush_sqm, filter_sqm):
+    # the catalog keys stay camelCase for the existing translation keys and point
+    # at the real state through state_path. The counters restart when the part is
+    # replaced, hence TOTAL_INCREASING.
     "mainBrushSqM": ElectroluxDevice(
         capability_info={"access": "read", "type": "number"},
         device_class=None,
         unit="m²",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        state_path="main_brush_sqm",
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_icon="mdi:brush",
         friendly_name="Main Brush Usage",
@@ -159,6 +198,8 @@ CATALOG_RVC: dict[str, ElectroluxDevice] = {
         capability_info={"access": "read", "type": "number"},
         device_class=None,
         unit="m²",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        state_path="side_brush_sqm",
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_icon="mdi:brush",
         friendly_name="Side Brush Usage",
@@ -167,9 +208,48 @@ CATALOG_RVC: dict[str, ElectroluxDevice] = {
         capability_info={"access": "read", "type": "number"},
         device_class=None,
         unit="m²",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        state_path="filter_sqm",
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_icon="mdi:air-filter",
         friendly_name="Filter Usage",
+    ),
+    # Remaining life as the Electrolux app shows it ("Rullborste 92 %").
+    # Rated life matches the app on a PUREi9.2 (229.5 m² gives 77 % for the side
+    # brush and particle filter at 1000 m², 92 % for the brush roll at 3000 m²)
+    # and the rated life homeassistant-wellbeing uses.
+    "mainBrushRemaining": ElectroluxDevice(
+        capability_info={"access": "read", "type": "number"},
+        device_class=None,
+        unit=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        state_path="main_brush_sqm",
+        lifetime_sqm=3000,
+        entity_category=None,
+        entity_icon="mdi:brush",
+        friendly_name="Brush Roll",
+    ),
+    "sideBrushRemaining": ElectroluxDevice(
+        capability_info={"access": "read", "type": "number"},
+        device_class=None,
+        unit=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        state_path="side_brush_sqm",
+        lifetime_sqm=1000,
+        entity_category=None,
+        entity_icon="mdi:brush",
+        friendly_name="Side Brush",
+    ),
+    "filterRemaining": ElectroluxDevice(
+        capability_info={"access": "read", "type": "number"},
+        device_class=None,
+        unit=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        state_path="filter_sqm",
+        lifetime_sqm=1000,
+        entity_category=None,
+        entity_icon="mdi:air-filter",
+        friendly_name="Particle Filter",
     ),
     # ── Gordias / Cybele / 700series ────────────────────────────────────────────
     # String state (inProgress / goingHome / idle / paused / sleeping / …)

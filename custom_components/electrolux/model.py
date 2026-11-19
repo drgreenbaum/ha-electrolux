@@ -70,6 +70,10 @@ class ElectroluxDevice:
     # display both and the button can be converted to a switch
     state_mapping: str | None = None
 
+    # wear counters reported as m² cleaned since the part was replaced: when set,
+    # the sensor shows the remaining life in % of this rated life (as the app does)
+    lifetime_sqm: float | None = None
+
     # enable the entity by default but can be disabled in the catalog
     # some entities are not useful for most users and clog the logbook
     entity_registry_enabled_default: bool = True
@@ -99,6 +103,11 @@ class ElectroluxDevice:
     # Leave as None to impose no state restriction (always available when connected).
     # Example: {"STOPRESET": ["RUNNING", "PAUSED"], "START": ["READY_TO_START"]}
     available_when_states: dict[str, list[str]] | None = None
+
+    # Translated enum states: maps the reported value (compared as a lowercase
+    # string) to a state key. The sensor then reports that key, lists the keys as
+    # its options and Home Assistant translates them (entity.sensor.<key>.state).
+    translated_states: dict[str, str] | None = None
 
 
 class ElectroluxTokenStore(TypedDict):
