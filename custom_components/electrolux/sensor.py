@@ -1,7 +1,6 @@
 """Switch platform for Electrolux."""
 
 import logging
-import math
 from datetime import datetime
 from typing import Any
 
@@ -312,7 +311,7 @@ class ElectroluxSensor(ElectroluxEntity, SensorEntity):
 
     @staticmethod
     def _remaining_life(value: Any, lifetime: float) -> int | None:
-        """Return the remaining life in % for a wear counter in m² (rounded down, as the app does)."""
+        """Return the remaining life in % for a wear counter in m² (rounded, as wellbeing does)."""
         if value is None or isinstance(value, bool):
             return None
         try:
@@ -321,7 +320,7 @@ class ElectroluxSensor(ElectroluxEntity, SensorEntity):
             return None
         if used < 0:
             return None
-        return max(0, math.floor(100 - used / lifetime * 100))
+        return max(0, round(100 - used / lifetime * 100))
 
     @property
     def _translated_states(self) -> dict[str, str] | None:
