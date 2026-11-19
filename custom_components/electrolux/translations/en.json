@@ -1815,6 +1815,11 @@
       "hoodfiltercharcindication": {
         "name": "Charcoal Filter Indication"
       }
+    },
+    "image": {
+      "map": {
+        "name": "Map"
+      }
     }
   }
 }
