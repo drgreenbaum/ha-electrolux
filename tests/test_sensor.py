@@ -1096,41 +1096,6 @@ class TestBatteryStatusSensor:
         )
         entity.hass = mock_coordinator.hass
         reported = {"batteryStatus": value}
-
-class TestRvcMaintenanceCounters:
-    """PUREi9 wear counters: API keys are snake_case, remaining life is shown in %."""
-
-    def test_catalog_points_at_the_reported_snake_case_keys(self):
-        from custom_components.electrolux.catalogs.catalog_rvc import CATALOG_RVC
-
-        assert CATALOG_RVC["mainBrushSqM"].state_path == "main_brush_sqm"
-        assert CATALOG_RVC["sideBrushSqM"].state_path == "side_brush_sqm"
-        assert CATALOG_RVC["filterSqM"].state_path == "filter_sqm"
-        assert CATALOG_RVC["mainBrushRemaining"].lifetime_sqm == 3000
-        assert CATALOG_RVC["sideBrushRemaining"].lifetime_sqm == 1000
-        assert CATALOG_RVC["filterRemaining"].lifetime_sqm == 1000
-
-    def _sensor(self, mock_coordinator, catalog_key, reported) -> ElectroluxSensor:
-        from custom_components.electrolux.catalogs.catalog_rvc import CATALOG_RVC
-
-        entry = CATALOG_RVC[catalog_key]
-        entity = ElectroluxSensor(
-            coordinator=mock_coordinator,
-            name="Robot",
-            config_entry=mock_coordinator.config_entry,
-            pnc_id="TEST_PNC",
-            entity_type=SENSOR,
-            entity_name=catalog_key,
-            entity_attr=catalog_key,
-            entity_source=None,
-            capability=dict(entry.capability_info),
-            unit=entry.unit,
-            device_class=None,
-            entity_category=None,
-            icon="mdi:brush",
-            catalog_entry=entry,
-        )
-        entity.hass = mock_coordinator.hass
         entity.appliance_status = {
             "applianceId": "test_appliance",
             "properties": {"reported": reported, "desired": {}, "metadata": {}},
@@ -1207,6 +1172,48 @@ class TestValueMappingStringKeys:
         sensor = self._sensor(mock_coordinator, True)
         sensor.catalog_entry.value_mapping = {"True": "Wrong"}
         assert sensor.native_value is True
+
+
+class TestRvcMaintenanceCounters:
+    """PUREi9 wear counters: API keys are snake_case, remaining life is shown in %."""
+
+    def test_catalog_points_at_the_reported_snake_case_keys(self):
+        from custom_components.electrolux.catalogs.catalog_rvc import CATALOG_RVC
+
+        assert CATALOG_RVC["mainBrushSqM"].state_path == "main_brush_sqm"
+        assert CATALOG_RVC["sideBrushSqM"].state_path == "side_brush_sqm"
+        assert CATALOG_RVC["filterSqM"].state_path == "filter_sqm"
+        assert CATALOG_RVC["mainBrushRemaining"].lifetime_sqm == 3000
+        assert CATALOG_RVC["sideBrushRemaining"].lifetime_sqm == 1000
+        assert CATALOG_RVC["filterRemaining"].lifetime_sqm == 1000
+
+    def _sensor(self, mock_coordinator, catalog_key, reported) -> ElectroluxSensor:
+        from custom_components.electrolux.catalogs.catalog_rvc import CATALOG_RVC
+
+        entry = CATALOG_RVC[catalog_key]
+        entity = ElectroluxSensor(
+            coordinator=mock_coordinator,
+            name="Robot",
+            config_entry=mock_coordinator.config_entry,
+            pnc_id="TEST_PNC",
+            entity_type=SENSOR,
+            entity_name=catalog_key,
+            entity_attr=catalog_key,
+            entity_source=None,
+            capability=dict(entry.capability_info),
+            unit=entry.unit,
+            device_class=None,
+            entity_category=None,
+            icon="mdi:brush",
+            catalog_entry=entry,
+        )
+        entity.hass = mock_coordinator.hass
+        entity.appliance_status = {
+            "applianceId": "test_appliance",
+            "properties": {"reported": reported, "desired": {}, "metadata": {}},
+        }
+        entity.reported_state = reported
+        return entity
 
     def test_usage_counter_reads_the_snake_case_key(self, mock_coordinator):
         entity = self._sensor(mock_coordinator, "filterSqM", {"filter_sqm": 229.49999999999997})
